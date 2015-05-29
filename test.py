@@ -168,9 +168,12 @@ class ChatBot(object):
         if 'response' in value and value['response']:
             if self.speaking_mode == 'markov':
                 potential = list(jieba.cut(random.choice(value['response'])))
-                seed = potential[0]
-                next = potential[1]
-                matching_response = self.markov.generate_markov_text(seed, next)
+                if len(potential) >= 2:
+                    seed = potential[0]
+                    next = potential[1]
+                    matching_response = self.markov.generate_markov_text(seed, next)
+                else:
+                    matching_response = random.choice(self.storage.find(closest_statement)['response'])
             else:
                 matching_response = random.choice(self.storage.find(closest_statement)['response'])
         else:
@@ -196,32 +199,29 @@ class ChatBot(object):
         import datetime
         return datetime.datetime.now().strftime(fmt)
 
-    def train(self, conversation):
+    def train(self, conversation): #beta
         for statement in conversation:
 
-            database_values = self.storage.find(statement)
-
-            # Create an entry if the statement does not exist in the database
-            if not database_values:
+            if not self.storage.find(statement):
                 self.storage.insert(statement, {})
 
             self.storage.update(statement, date=self.timestamp())
 
             responses = []
             database_values = self.storage.find(statement)
+
             if "response" in database_values:
                 responses = database_values["response"]
-            if self.get_last_statement():
-            # Check to make sure that the statement does not already exist
-                if not self.get_last_statement() in responses:
-                    responses.append(statement)
-
-            if conversation[0] == statement:
-                self.storage.update(statement, response=responses)
+                if conversation[-1] == statement:
+                    responses = []
+                else:
+                    responses.append(conversation[conversation.index(statement) + 1])
             else:
-                self.storage.update(self.get_last_statement(), response=responses)
-            
-            self.recent_statements.append(statement)
+                if conversation[-1] == statement:
+                    responses = []
+                else:
+                    responses = [conversation[conversation.index(statement) + 1]]
+            self.storage.update(statement, response=responses)
 
     def update_log(self, data):
         if self.get_last_statement():
@@ -329,6 +329,8 @@ if __name__ == '__main__':
     #     u"好吃吗？",
     #     u"棒极了"
     # ]
+
+    # chatbot.train(conversation)
 
     flag = True
 
