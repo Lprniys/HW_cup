@@ -38,19 +38,6 @@ def processPosts():
     return posts
     # print(posts[122])
 
-# def processResponses():
-# f = open('response.index', encoding= 'utf8')
-# p = re.compile(r'(\d+)(\D{2})(.*)', re.S)
-# for line in f.readlines():
-#     m = p.match(line)
-#     if m:
-#         vl = m.groups()[2][:-1].split()
-#         key = int(m.groups()[0])
-#         value = ''.join(vl)
-#         responses[key] = value
-
-# print(responses[122])
-
 def processResponses():
     responses = {}
     f = open('response.index', encoding= 'utf8')
@@ -72,7 +59,7 @@ def processResponses():
     # print(responses[38141])
 
 def dumpDatabase(n):
-    storage = JsonDatabaseAdapter('database.db')
+    storage = JsonDatabase('database.db')
     conversation = processPair()
     print('done pairs')
     posts = processPosts()
@@ -94,8 +81,6 @@ def dumpDatabase(n):
 def deleteStopwords(sentence):
     stopwords = {}.fromkeys([u'的',u'了'])
 
-    # a = open('corpus.txt', encoding= 'utf8').read()
-
     segs = jieba.cut(sentence)
 
     goal = ''
@@ -104,18 +89,6 @@ def deleteStopwords(sentence):
         if s not in stopwords:
             goal += s
     return goal
-
-# def train():
-#     processPosts()
-#     print('done posts')
-#     # processResponses()
-#     # print('done responses')
-
-#     for i in posts.keys():
-#         goal = deleteStopwords(posts[i])
-        
-
-#     pass
 
 if __name__ == '__main__':
     dumpDatabase(10)

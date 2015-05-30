@@ -1,4 +1,4 @@
-﻿#coding=utf-8 
+#coding=utf-8 
 
 from __future__ import division
 import random
@@ -6,7 +6,7 @@ from jsondb.db import Database
 import jieba
 from create import*
 
-class JsonDatabaseAdapter:
+class JsonDatabase(object):
 
     def __init__(self, database_path):
         self.database = Database(database_path)
@@ -31,13 +31,9 @@ class JsonDatabaseAdapter:
         return values
 
     def keys(self):
-        # The return value has to be cast as a list for Python 3 compatibility
         return list(self.database[0].keys())
 
     def get_random(self):
-        """
-        Returns a random statement from the database
-        """
         statement = random.choice(self.keys())
         return {statement: self.find(statement)}
 
@@ -45,10 +41,10 @@ class MyCorpus(object):
 
     def __init__(self):
         self.storage = []
-        storage = JsonDatabaseAdapter('database.db')
+        storage = JsonDatabase('database.db')
 
     def __iter__(self):
-        storage = JsonDatabaseAdapter('database.db')
+        storage = JsonDatabase('database.db')
         self.storage = storage.keys()
         for i in self.storage:
             goal = deleteStopwords(i)
@@ -57,7 +53,7 @@ class MyCorpus(object):
 class Markov(object):
     
     def __init__(self):
-        self.storage = JsonDatabaseAdapter('database.db')
+        self.storage = JsonDatabase('database.db')
         print('done responses')
         self.cache = {}
         self.words = []
@@ -65,7 +61,6 @@ class Markov(object):
             database_values = self.storage.find(r)
             for i in database_values['response']:
                 sentence = list(jieba.cut(i))
-                # sentence[-1] += '。'
                 self.words.extend(sentence)
         self.word_size = len(self.words)
         print('done words')
@@ -73,10 +68,6 @@ class Markov(object):
         print('done db')
     
     def triples(self):
-        """ Generates triples from the given data string. So if our string were
-                "What a lovely day", we'd generate (What, a, lovely) and then
-                (a, lovely, day).
-        """
         
         if len(self.words) < 3:
             return
@@ -97,8 +88,12 @@ class Markov(object):
         gen_words = [seed, next]
         flag = True
         while flag:
-            w1, w2 = w2, random.choice(self.cache[(w1, w2)])
-            gen_words.append(w2)
+            try:
+                w1, w2 = w2, random.choice(self.cache[(w1, w2)])
+            except KeyError:
+                flag = False
+            else:
+                gen_words.append(w2)
             if u'。' in w2 or u'？' in w2 or u'！' in w2:
                 flag = False
         return ''.join(gen_words)
@@ -118,13 +113,11 @@ class ChatBot(object):
         self.name = name
         self.log = logging
 
-        self.storage = JsonDatabaseAdapter(database)
+        self.storage = JsonDatabase(database)
 
         self.recent_statements = []
 
         self.posts = processPosts()
-        # self.responses = processResponses()
-        # self.conversation = processPair()
 
         self.Corp = MyCorpus()
         print(u'语料载入完成！')
@@ -146,12 +139,6 @@ class ChatBot(object):
 
     def closest(self, query, database):
 
-        # Check if an exact match exists
-        # if database.find(text):
-        #     return text
-
-        # Get the closest matching statement from the database
-        # return process.extract(text, database.keys(), limit=1)[0][0]
         vec_bow = self.dictionary.doc2bow(jieba.cut((query)))
         vec_tfidf = self.tfidf[vec_bow]
         index = similarities.MatrixSimilarity(self.corpus_tfidf)
@@ -163,7 +150,6 @@ class ChatBot(object):
 
         closest_statement = self.closest(input_statement, self.storage)
 
-        # Initialize
         value = self.storage.find(closest_statement)
         if 'response' in value and value['response']:
             if self.speaking_mode == 'markov':
@@ -182,20 +168,12 @@ class ChatBot(object):
         return {matching_response: self.storage.find(matching_response)}
 
     def get_last_statement(self):
-        """
-        Returns the last statement that was issued to the chat bot.
-        """
-
-        # If there was no last statements, return None
         if len(self.recent_statements) == 0:
             return None
 
         return self.recent_statements[-1]
 
     def timestamp(self, fmt="%Y-%m-%d-%H-%M-%S"):
-        """
-        Returns a string formatted timestamp of the current time.
-        """
         import datetime
         return datetime.datetime.now().strftime(fmt)
 
@@ -229,11 +207,9 @@ class ChatBot(object):
             statement = list(data.keys())[0]
             values = data[statement]
 
-            # Create the statement if it doesn't exist in the database
             if not self.storage.find(entry):
                 self.storage.insert(entry, {})
 
-            # Update the database with the changes
             self.storage.update(entry, name=values["name"], date=values["date"])
 
             responses = []
@@ -250,16 +226,10 @@ class ChatBot(object):
             self.storage.update(entry, response=responses)
 
     def get_response_data(self, user_name, input_text):
-        """
-        Returns a dictionary containing the following data:
-        * user: The user's statement meta data
-        * bot: The bot's statement meta data
-        """
 
         if input_text:
             response_statement = self.get(input_text)
         else:
-            # If the input is blank, return a random statement
             response_statement = self.storage.get_random()
 
         user = {
@@ -269,7 +239,6 @@ class ChatBot(object):
             }
         }
 
-        # Update the database before selecting a response if logging is enabled
         if self.log:
             self.update_log(user)
 
@@ -278,7 +247,7 @@ class ChatBot(object):
 
         return {user_name: user, "bot": statement_text}
 
-    def get_response(self, input_text, user_name="user"):
+    def get_response(self, input_text, user_name="HW"):
 
         response = self.get_response_data(user_name, input_text)["bot"]
 
