@@ -6,7 +6,7 @@ from jsondb.db import Database
 import jieba
 from create import*
 
-class JsonDatabase(object):
+class JsonDatabase(object): 
 
     def __init__(self, database_path):
         self.database = Database(database_path)
@@ -37,7 +37,7 @@ class JsonDatabase(object):
         statement = random.choice(self.keys())
         return {statement: self.find(statement)}
 
-class MyCorpus(object):
+class MyCorpus(object): 
 
     def __init__(self):
         self.storage = []
@@ -46,11 +46,11 @@ class MyCorpus(object):
     def __iter__(self):
         storage = JsonDatabase('database.db')
         self.storage = storage.keys()
-        for i in self.storage:
+        for i in self.storage: 
             goal = deleteStopwords(i)
             yield jieba.cut(goal)
 
-class Markov(object):
+class Markov(object): 
     
     def __init__(self):
         self.storage = JsonDatabase('database.db')
@@ -98,13 +98,13 @@ class Markov(object):
                 flag = False
         return ''.join(gen_words)
 
-class ChatBot(object):
+class ChatBot(object): 
 
     def __init__(self, name,
             database="database.db", logging=True):
 
         print(u'初始化中...')
-        markov = input('喜欢我口若悬河吗？y/n:\n')
+        markov = input('喜欢我口若悬河吗？y/n:\n') 
         if markov == 'y':
             self.speaking_mode = 'markov'
         else:
@@ -137,7 +137,7 @@ class ChatBot(object):
 
         print(u'初始化完成！')
 
-    def closest(self, query, database):
+    def closest(self, query, database): 
 
         vec_bow = self.dictionary.doc2bow(jieba.cut((query)))
         vec_tfidf = self.tfidf[vec_bow]
@@ -146,7 +146,7 @@ class ChatBot(object):
         target = sorted(enumerate(sims), key=lambda item: -item[1])[0]
         return self.Corp.storage[target[0]]
 
-    def get(self, input_statement):
+    def get(self, input_statement): 
 
         closest_statement = self.closest(input_statement, self.storage)
 
@@ -159,9 +159,9 @@ class ChatBot(object):
                     next = potential[1]
                     matching_response = self.markov.generate_markov_text(seed, next)
                 else:
-                    matching_response = random.choice(self.storage.find(closest_statement)['response'])
+                    matching_response = random.choice(value['response'])
             else:
-                matching_response = random.choice(self.storage.find(closest_statement)['response'])
+                matching_response = random.choice(value['response'])
         else:
             matching_response = list(self.storage.get_random().keys())[0]
 
@@ -173,11 +173,11 @@ class ChatBot(object):
 
         return self.recent_statements[-1]
 
-    def timestamp(self, fmt="%Y-%m-%d-%H-%M-%S"):
+    def timestamp(self, fmt="%Y-%m-%d-%H-%M-%S"): 
         import datetime
         return datetime.datetime.now().strftime(fmt)
 
-    def train(self, conversation): #beta
+    def train(self, conversation): #beta 
         for statement in conversation:
 
             if not self.storage.find(statement):
@@ -201,7 +201,7 @@ class ChatBot(object):
                     responses = [conversation[conversation.index(statement) + 1]]
             self.storage.update(statement, response=responses)
 
-    def update_log(self, data):
+    def update_log(self, data): 
         if self.get_last_statement():
             entry = list(self.get_last_statement().keys())[0]
             statement = list(data.keys())[0]
@@ -211,11 +211,8 @@ class ChatBot(object):
                 self.storage.insert(entry, {})
 
             self.storage.update(entry, name=values["name"], date=values["date"])
-
             responses = []
-
             database_values = self.storage.find(entry)
-
             if "response" in database_values:
                 responses = database_values["response"]
                 if statement not in responses:
@@ -226,7 +223,6 @@ class ChatBot(object):
             self.storage.update(entry, response=responses)
 
     def get_response_data(self, user_name, input_text):
-
         if input_text:
             response_statement = self.get(input_text)
         else:
@@ -241,65 +237,28 @@ class ChatBot(object):
 
         if self.log:
             self.update_log(user)
-
         self.recent_statements.append(response_statement)
         statement_text = list(self.get_last_statement().keys())[0]
-
         return {user_name: user, "bot": statement_text}
 
     def get_response(self, input_text, user_name="HW"):
-
         response = self.get_response_data(user_name, input_text)["bot"]
-
         return response
 
-# def tokenize(sentence):
-#     return jieba.cut(sentence, cut_all=False)
-
-# def score(sentence, target):
-#     if sentence == target:
-#         return sentence, 100
-#     count = 0
-#     l1 = list(tokenize(sentence))
-#     l2 = list(tokenize(target))
-#     base = len(l2) if len(l2) >= len(l1) else len(l1)
-#     for w in l1:
-#         if w in l2:
-#             count += 1
-#             l2.remove(w)
-#     score = count/base
-#     return sentence, round(score*100,1)
-
-# def score2(sentence, target):
-#     if sentence == target:
-#         return sentence, 100
-#     count = 0
-#     for w in tokenize(sentence):
-#         if w in tokenize(target):
-#             count += 1
-#     score = count/len(list(tokenize(target)))
-#     return sentence, round(score*100,1)
-
-# def extract(sentence, choices):
-#     final = 'None', 0
-#     for c in choices:
-#         if final[1] < score(sentence, c)[1]:
-#             final = c, score(sentence, c)[1]
-#     return final[0]
         
 if __name__ == '__main__':
 
     chatbot = ChatBot("cleverboy")
 
-    # conversation = [
-    #     u"你好",
-    #     u"吃过早饭了吗？",
-    #     u"吃过了",
-    #     u"好吃吗？",
-    #     u"棒极了"
-    # ]
+    conversation = [
+        u"你好。",
+        u"吃过早饭了吗？",
+        u"吃过了。",
+        u"好吃吗？",
+        u"棒极了。"
+    ]
 
-    # chatbot.train(conversation)
+    chatbot.train(conversation)
 
     flag = True
 

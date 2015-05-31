@@ -9,9 +9,7 @@ from test import*
 def processPair():
     conversation = {}
     f = open('original.pair')
-
     p = re.compile(r'(\d+)(\D?)(.*)', re.S)
-
     for line in f.readlines():
         m = p.match(line)
         if m:
@@ -80,11 +78,8 @@ def dumpDatabase(n):
 
 def deleteStopwords(sentence):
     stopwords = {}.fromkeys([u'的',u'了'])
-
     segs = jieba.cut(sentence)
-
     goal = ''
-
     for s in segs:
         if s not in stopwords:
             goal += s
@@ -92,43 +87,3 @@ def deleteStopwords(sentence):
 
 if __name__ == '__main__':
     dumpDatabase(10)
-    # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
-    # class MyCorpus(object):
-
-    #     def __init__(self):
-    #         processPosts()
-    #         print('done posts')
-    #         self.posts = posts
-
-    #     def __iter__(self):
-            
-    #         for i in range(10000):
-    #             goal = deleteStopwords(self.posts[i])
-    #             yield jieba.cut(goal)
-
-    # Corp = MyCorpus()
-    # print('done MyCorpus')
-    # dictionary = corpora.Dictionary(Corp)
-    # print('done dictionary')
-
-    # def dumpCorpus(Corp, dictionary):
-    #     for text in Corp:
-    #         yield dictionary.doc2bow(text)
-
-    # tfidf = models.TfidfModel(dumpCorpus(Corp, dictionary))
-    # print('done tfidf')
-    # corpus_tfidf = tfidf[list(dumpCorpus(Corp, dictionary))]
-    # print('done corpus_tfidf')
-    # query = u'新的一年里'
-
-    # vec_bow = dictionary.doc2bow(jieba.cut((query))) 
-    # vec_tfidf = tfidf[vec_bow]
-
-    # index = similarities.MatrixSimilarity(corpus_tfidf)
-    # print('done index')
-    # sims = index[vec_tfidf]  
-    # print('done sims')
-    # target = sorted(enumerate(sims), key=lambda item: -item[1])[0:4]
-
-    # print(posts[target[0][0]])
