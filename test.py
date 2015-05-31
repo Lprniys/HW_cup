@@ -100,8 +100,7 @@ class Markov(object):
 
 class ChatBot(object): 
 
-    def __init__(self, name,
-            database="database.db", logging=True):
+    def __init__(self, name, database="database.db"):
 
         print(u'初始化中...')
         markov = input('喜欢我口若悬河吗？y/n:\n') 
@@ -111,7 +110,6 @@ class ChatBot(object):
             self.speaking_mode = 'matching'
 
         self.name = name
-        self.log = logging
 
         self.storage = JsonDatabase(database)
 
@@ -235,8 +233,7 @@ class ChatBot(object):
             }
         }
 
-        if self.log:
-            self.update_log(user)
+        self.update_log(user)
         self.recent_statements.append(response_statement)
         statement_text = list(self.get_last_statement().keys())[0]
         return {user_name: user, "bot": statement_text}
