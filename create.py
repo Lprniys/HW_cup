@@ -4,7 +4,7 @@ import re
 import jieba
 import logging
 from gensim import corpora, models, similarities
-from test import*
+from main import*
 
 def processPair():
     conversation = {}
